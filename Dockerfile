@@ -23,7 +23,7 @@ COPY package-lock.json* ./
 RUN npm install
 
 # Copy all files to the container
-COPY . . 
+COPY . .
 
 # Expose port 5000 for your app
 EXPOSE 5000
@@ -34,4 +34,3 @@ RUN chmod +x /app/start.sh
 
 # Run the start script
 CMD ["/app/start.sh"]
-
