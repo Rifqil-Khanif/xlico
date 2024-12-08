@@ -445,7 +445,7 @@ const isQuotedDocument = type === 'extendedTextMessage';
         
         // 🔄 Auto Set Bio 🔄
 	if (db.settings[botNumber].autobio) {
-            XliconBotInc.updateProfileStatus(`🚀 ${botname} is Live! 🎉\n\n           🕒 𝙐𝙥𝙩𝙞𝙢𝙚: 𝘙𝘶𝘯𝘯𝘪𝘯𝘨 𝘍𝘰𝘳 ${runtime(process.uptime())} ⏳\n\n                               ©XLICON BOT INC ⛩️`).catch(_ => _);
+            XliconBotInc.updateProfileStatus(`🚀 ${botname} is Live! 🎉\n\n           🕒 𝙐𝙥𝙩𝙞𝙢𝙚: 𝘙𝘶𝘯𝘯𝘪𝘯𝘨 𝘍𝘰𝘳 ${runtime(process.uptime())} ⏳\n\n                               ©V.S.L BOT INC ⛩️`).catch(_ => _);
         }
 
         //auto type
