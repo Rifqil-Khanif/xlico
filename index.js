@@ -93,7 +93,7 @@ console.log(
  ██╔██╗ ██║     ██║     ██║██║   ██║██║╚██╗██║╚════╝╚██╗ ██╔╝╚════██║
 ██╔╝ ██╗███████╗╚██████╗██║╚██████╔╝██║ ╚████║       ╚████╔╝      ██║
 ╚═╝  ╚═╝╚══════╝ ╚═════╝╚═╝ ╚═════╝ ╚═╝  ╚═══╝        ╚═══╝       ╚═╝
-  `)
+`)
 );
 
 console.log(chalk.white.bold(`${chalk.gray.bold("📃  Information :")}         
@@ -183,32 +183,51 @@ async function startXliconBot() {
         if (connection == 'open') {
             console.log('Connected to : ' + JSON.stringify(XliconBotInc.user, null, 2));
         } else if (receivedPendingNotifications == 'true') {
-            console.log(`Received notifications from WhatsApp, ${connection}`);
+            console.log('Please wait About 1 Minute...');
         }
     });
+    
+    XliconBotInc.ev.on('messages.upsert', (msg) => MessagesUpsert(msg, XliconBotInc));
+    XliconBotInc.ev.on('group-participants.update', (update) => GroupParticipantsUpdate(update, XliconBotInc));
+    XliconBotInc.ev.on('group.update', (update) => GroupUpdate(update, XliconBotInc));
 
-    // Event listener for group join
-    XliconBotInc.ev.on('group-participants.update', async (update) => {
-        const { id, participants, action } = update;
-        if (action === 'add') {
-            for (let participant of participants) {
-                console.log(`New member added: ${participant}`);
-                const welcomeMessage = `Welcome to the group, ${participant}! 🎉`;
-                await XliconBotInc.sendMessage(id, { text: welcomeMessage });
-            }
-        } else if (action === 'remove') {
-            for (let participant of participants) {
-                console.log(`Member left: ${participant}`);
-                const leftMessage = `Goodbye, ${participant}! We will miss you! 😢`;
-                await XliconBotInc.sendMessage(id, { text: leftMessage });
-            }
-        }
+    process.on('uncaughtException', function (err) {
+        console.error(err);
+        process.exit(1);
     });
 
-    XliconBotInc.ev.on('messages.upsert', async (m) => {
-        if (m.type === 'notify' && m.messages[0].key.remoteJid && m.messages[0].message) {
-            // continue to process messages
-        }
+    process.on('unhandledRejection', (err) => {
+        console.error(err);
+        process.exit(1);
     });
 }
-sessionLoader();
+
+async function initStart() {
+    if (fs.existsSync(credsPath)) {
+        console.log(color("Creds.json exists, proceeding to start...", 'yellow'));
+        await startXliconBot();
+    } else {
+        const sessionCheck = await sessionLoader();
+        if (sessionCheck) {
+            console.log("Session downloaded successfully, proceeding to start...");
+            await startXliconBot();
+        } else {
+            if (!fs.existsSync(credsPath)) {
+                if (!global.SESSION_ID) {
+                    console.log(color("Please wait for a few seconds to enter your number!", 'red'));
+                    await startXliconBot();
+                }
+            }
+        }
+    }
+}
+
+initStart(); // Calling the initStart function
+
+let file = require.resolve(__filename);
+fs.watchFile(file, () => {
+    fs.unwatchFile(file);
+    console.log(chalk.redBright(`Update ${__filename}`));
+    delete require.cache[file];
+    require(file);
+});

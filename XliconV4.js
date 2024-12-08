@@ -296,7 +296,7 @@ const isQuotedDocument = type === 'extendedTextMessage';
 			if (typeof group !== 'object') global.db.groups[m.chat] = {}
 			if (group) {
 				if (!('ntnsfw' in group)) group.ntnsfw = false
-				          if (!('welcome' in group)) group.welcome = false
+				          if (!('welcome' in group)) group.welcome = true
                   if (!('setinfo' in group)) group.setinfo = false
 				          if (!('badword' in group)) group.badword = false
                   if (!('antiforeignnum' in group)) group.antiforeignnum = false
@@ -320,7 +320,7 @@ const isQuotedDocument = type === 'extendedTextMessage';
 			} else {
 				global.db.groups[m.chat] = {
 				  ntsfw: false,
-				  welcome: false,
+				  welcome: true,
 				  setinfo: false,
 				  badword: false,
                   antiforeignnum: false,
