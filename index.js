@@ -52,6 +52,7 @@ const { GroupUpdate, GroupParticipantsUpdate, MessagesUpsert, Solving } = requir
 const { imageToWebp, videoToWebp, writeExifImg, writeExifVid } = require('./lib/exif');
 const { isUrl, generateMessageTag, getBuffer, getSizeMedia, fetchJson, await, sleep } = require('./lib/function');
 
+
 const sessionDir = path.join(__dirname, 'session');
 const credsPath = path.join(sessionDir, 'creds.json');
 
@@ -62,7 +63,7 @@ async function sessionLoader() {
 
     if (!fs.existsSync(credsPath)) {
       if (!global.SESSION_ID) {
-        return console.log(color(`Session id and creds.json not found!!\n\nWait to enter your number`, 'red'));
+      return console.log(color(`Session id and creds.json not found!!\n\nWait to enter your number`, 'red'));
       }
 
       const sessionData = global.SESSION_ID.split("XLICON-V4~")[1];
@@ -93,7 +94,7 @@ console.log(
  ██╔██╗ ██║     ██║     ██║██║   ██║██║╚██╗██║╚════╝╚██╗ ██╔╝╚════██║
 ██╔╝ ██╗███████╗╚██████╗██║╚██████╔╝██║ ╚████║       ╚████╔╝      ██║
 ╚═╝  ╚═╝╚══════╝ ╚═════╝╚═╝ ╚═════╝ ╚═╝  ╚═══╝        ╚═══╝       ╚═╝
-`)
+  `)
 );
 
 console.log(chalk.white.bold(`${chalk.gray.bold("📃  Information :")}         
@@ -187,43 +188,61 @@ async function startXliconBot() {
         }
     });
     
-    XliconBotInc.ev.on('messages.upsert', (msg) => MessagesUpsert(msg, XliconBotInc));
-    XliconBotInc.ev.on('group-participants.update', (update) => GroupParticipantsUpdate(update, XliconBotInc));
-    XliconBotInc.ev.on('group.update', (update) => GroupUpdate(update, XliconBotInc));
-
-    process.on('uncaughtException', function (err) {
-        console.error(err);
-        process.exit(1);
+    XliconBotInc.ev.on('contacts.update', (update) => {
+        for (let contact of update) {
+            let id = XliconBotInc.decodeJid(contact.id);
+            if (store && store.contacts) store.contacts[id] = { id, name: contact.notify };
+        }
     });
-
-    process.on('unhandledRejection', (err) => {
-        console.error(err);
-        process.exit(1);
+    
+    XliconBotInc.ev.on('call', async (call) => {
+        let botNumber = await XliconBotInc.decodeJid(XliconBotInc.user.id);
+        let anticall = global.db.settings[botNumber].anticall;
+        if (anticall) {
+            for (let id of call) {
+                if (id.status === 'offer') {
+                    let msg = await XliconBotInc.sendMessage(id.from, { text: `Currently, We Cannot Receive Calls ${id.isVideo ? 'Video' : 'Voice'}.\nIf @${id.from.split('@')[0]} Needs Help, Please Contact Owner :)`, mentions: [id.from] });
+                    await XliconBotInc.sendContact(id.from, global.owner, msg);
+                    await XliconBotInc.rejectCall(id.id, id.from);
+                }
+            }
+        }
     });
+    
+    XliconBotInc.ev.on('groups.update', async (update) => {
+        await GroupUpdate(XliconBotInc, update, store);
+    });
+    
+    XliconBotInc.ev.on('group-participants.update', async (update) => {
+        await GroupParticipantsUpdate(XliconBotInc, update);
+    });
+    
+    XliconBotInc.ev.on('messages.upsert', async (message) => {
+        await MessagesUpsert(XliconBotInc, message, store);
+    });
+    return XliconBotInc;
 }
 
 async function initStart() {
     if (fs.existsSync(credsPath)) {
         console.log(color("Creds.json exists, proceeding to start...", 'yellow'));
-        await startXliconBot();
-    } else {
-        const sessionCheck = await sessionLoader();
+await startXliconBot();
+} else {
+         const sessionCheck = await sessionLoader();
         if (sessionCheck) {
-            console.log("Session downloaded successfully, proceeding to start...");
-            await startXliconBot();
-        } else {
-            if (!fs.existsSync(credsPath)) {
-                if (!global.SESSION_ID) {
-                    console.log(color("Please wait for a few seconds to enter your number!", 'red'));
-                    await startXliconBot();
-                }
-            }
+            console.log("Session downloaded successfully, proceeding to start... .");
+await startXliconBot();
+    } else {
+     if (!fs.existsSync(credsPath)) {
+    if(!global.SESSION_ID) {
+            console.log(color("Please wait for a few seconds to enter your number!", 'red'));
+await startXliconBot();
         }
     }
-}
-
-initStart(); // Calling the initStart function
-
+  }
+ }
+} 
+initStart();
 let file = require.resolve(__filename);
 fs.watchFile(file, () => {
     fs.unwatchFile(file);
